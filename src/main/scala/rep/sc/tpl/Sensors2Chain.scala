@@ -112,17 +112,23 @@ class Sensors2Chain extends IContract {
     }
 
     def register_device(ctx: ContractContext, data: JustMap): ActionResult = {
-        if (!keysExist(data, Set("deviceID", "description"))) {
+        if (!keysExist(data, Set("deviceID", "description", "projectID"))) {
             throw ContractException("register_device必填属性不全，请检查")
         }
         val deviceID = data("deviceID").asInstanceOf[String]
-        val description = data("description").asInstanceOf[String]
-        val creditCode = ctx.t.getSignature.getCertId.creditCode
-        val certName = ctx.t.getSignature.getCertId.certName
         if (isRegistered(ctx, deviceID)) {
             throw new ContractException("deviceID[" + deviceID + "]已存在");
         }
-        val rv: JustMap = Map("deviceID" -> deviceID, "description" -> description, "creditCode" -> creditCode, "certName" -> certName)
+        val description = data("description").asInstanceOf[String]
+        val projectID = data("projectID").asInstanceOf[String]
+        if (isRegistered(ctx, projectID)) {
+            throw new ContractException("projectID[" + projectID + "]尚未注册存在");
+        }
+
+        val creditCode = ctx.t.getSignature.getCertId.creditCode
+        val certName = ctx.t.getSignature.getCertId.certName
+
+        val rv: JustMap = Map("deviceID" -> deviceID, "projectID"->projectID , "description" -> description, "creditCode" -> creditCode, "certName" -> certName)
         saveKV(ctx, DEVICE_PREFIX, deviceID, rv)
         ActionResult()
     }
